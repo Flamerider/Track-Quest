@@ -82,10 +82,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\carScript.cs" />
+    <Compile Include="Assets\Scripts\cpInfo.cs" />
     <Compile Include="Assets\Scripts\materialType.cs" />
+    <Compile Include="Assets\Scripts\rulesHandler.cs" />
     <Compile Include="Assets\Scripts\varClasses.cs" />
-    <Compile Include="Assets\cpInfo.cs" />
-    <Compile Include="Assets\rulesHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

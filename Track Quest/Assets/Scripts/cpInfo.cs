@@ -11,7 +11,7 @@ public class cpInfo : MonoBehaviour
 	void Start ()
     {
 
-        for(float n = 0; n <= (transform.childCount - 1); n++)
+        for(float n = 0; n <= (transform.childCount); n++)
         {
             Debug.Log("a" + n);
             if (transform.Find("cp_" + n) != null)
@@ -50,7 +50,10 @@ public class cpInfo : MonoBehaviour
             Gizmos.DrawLine(item.transform.position, item.transform.position +
                 (-item.transform.up * item.transform.localScale.y * 0.5f) + (item.transform.right * item.transform.localScale.x * 0.5f));
 
-            Handles.Label(item.transform.position + (Vector3.up * 2.0f), item.name);
+            if (CheckPoints.IndexOf(item) != (CheckPoints.Count - 1))
+                Handles.Label(item.transform.position + (Vector3.up * 2.0f), item.name);
+            else
+                Handles.Label(item.transform.position + (Vector3.up * 2.0f), (item.name + "/Start/Finish"));
 
 
             Gizmos.color = Color.white;
