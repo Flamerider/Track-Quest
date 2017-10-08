@@ -50,11 +50,6 @@ public class cpInfo : MonoBehaviour
             Gizmos.DrawLine(item.transform.position, item.transform.position +
                 (-item.transform.up * item.transform.localScale.y * 0.5f) + (item.transform.right * item.transform.localScale.x * 0.5f));
 
-            if (CheckPoints.IndexOf(item) != (CheckPoints.Count - 1))
-                Handles.Label(item.transform.position + (Vector3.up * 2.0f), item.name);
-            else
-                Handles.Label(item.transform.position + (Vector3.up * 2.0f), (item.name + "/Start/Finish"));
-
 
             Gizmos.color = Color.white;
             if (CheckPoints.IndexOf(item) != 0)

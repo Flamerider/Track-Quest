@@ -21,6 +21,7 @@ public class carScript : MonoBehaviour
     //=======================================================
     //TIMERS
     private timer reverseTransmission = new timer(0.3f);
+    private timer boostTimer = new timer(0.5f);
     //=======================================================
 
     private float terrainModifier, finalTopSpeed, currentSpeed, deaccelRate;
@@ -83,6 +84,18 @@ public class carScript : MonoBehaviour
     void Update()
     {
         currentTerrain = GetTerrain();
+
+        BoostCheck();
+
+        if (ListOfStates.Contains(driveState.boosting))
+        {
+            boostTimer.Tick();
+            if (boostTimer.Ended())
+                DeactivateState(driveState.boosting);
+
+            currentSpeed += ((acceleration * Time.deltaTime) * 6.0f);
+        }
+
         finalTopSpeed = topSpeed * GetTopSpeedModifier();
 
         if (!ListOfStates.Contains(driveState.in_air))
@@ -115,6 +128,7 @@ public class carScript : MonoBehaviour
             }
             else if (Input.GetAxis("Vertical") < 0)
             {
+                DeactivateState(driveState.boosting);
                 if (currentSpeed > (brakes * Time.deltaTime))
                 {
                     currentSpeed -= (brakes * Time.deltaTime);
@@ -325,6 +339,7 @@ public class carScript : MonoBehaviour
 
     public float GetGripModifier()
     {
+
         switch (currentTerrain)
         {
             case terrainTypes.road:
@@ -353,9 +368,9 @@ public class carScript : MonoBehaviour
     public float GetTopSpeedModifier()
     {
         if (ListOfStates.Contains(driveState.boosting))
-            return 1.4f;
+            return 1.05f;
         else if (ListOfStates.Contains(driveState.mini_boosting))
-            return 1.2f;
+            return 1.025f;
 
         switch(currentTerrain)
         {
@@ -384,7 +399,7 @@ public class carScript : MonoBehaviour
     public float GetAccelAfterModifier()
     {
         if (ListOfStates.Contains(driveState.boosting))
-            return acceleration * 1.6f;
+            return acceleration * 2.0f;
         else if (ListOfStates.Contains(driveState.mini_boosting))
             return acceleration * 1.5f;
 
@@ -394,7 +409,7 @@ public class carScript : MonoBehaviour
     public float GetSteeringAfterModifier()
     {
         float finalValue = 1.0f;
-        float baseFactor = 1.4f;
+        float baseFactor = 1.3f;
 
         //Reduces your ability to turn based on how fast you are going. G-force resistance and all that.
         //Increasing base factor causes the maximum effect to hamper steering MORE, and decreasing it does the reverse.
@@ -403,6 +418,23 @@ public class carScript : MonoBehaviour
             );
 
         return steering * finalValue;
+    }
+
+    void BoostCheck()
+    {
+        LayerMask lMask = 1 << 11;
+
+        Ray downCheck = new Ray();
+        RaycastHit hitInfo;
+        
+        downCheck.origin = new Vector3(transform.position.x, transform.position.y + 0.3f, transform.position.z);
+        downCheck.direction = Vector3.down;
+
+        if (Physics.Raycast(downCheck, out hitInfo, 1.0f, lMask))
+        {
+            boostTimer.Reset();
+            ActivateState(driveState.boosting);
+        }
     }
 
     public void GetSlopeRotations()
@@ -414,9 +446,11 @@ public class carScript : MonoBehaviour
         Ray downCheck = new Ray();
         RaycastHit hitInfo;
 
+        float offset_h_o = 0.4f, offset_h_d = 0.6f;
+
         //===============================================
         //Origin
-        downCheck.origin = new Vector3(transform.position.x, transform.position.y + 0.3f, transform.position.z);
+        downCheck.origin = new Vector3(transform.position.x, transform.position.y + offset_h_o, transform.position.z);
         downCheck.direction = Vector3.down;
 
         float downV = 0;
@@ -424,10 +458,10 @@ public class carScript : MonoBehaviour
         if ((yVelocity < 0) && (ListOfStates.Contains(driveState.in_air)))
             downV = (yVelocity * Time.fixedDeltaTime);
         
-        Debug.DrawRay(downCheck.origin, downCheck.direction * (0.4f + downV), Color.yellow);
+        Debug.DrawRay(downCheck.origin, downCheck.direction * (offset_h_d + downV), Color.yellow);
 
         //Downwards gravity checks. If the car is on a surface or not.
-        if (Physics.Raycast(downCheck, out hitInfo, 0.4f + downV, lMask))
+        if (Physics.Raycast(downCheck, out hitInfo, offset_h_d + downV, lMask))
         {
             DeactivateState(driveState.in_air);
             transform.position = hitInfo.point;
@@ -436,10 +470,9 @@ public class carScript : MonoBehaviour
         {
             downCheck.origin = (downCheck.origin + (transform.forward * 2.0f));
 
-            Debug.DrawRay(downCheck.origin, downCheck.direction * (0.4f + downV), Color.yellow);
-            if (Physics.Raycast(downCheck, out hitInfo, 0.4f + downV, lMask))
+            Debug.DrawRay(downCheck.origin, downCheck.direction * (offset_h_d + downV), Color.yellow);
+            if (Physics.Raycast(downCheck, out hitInfo, offset_h_d + downV, lMask))
             {
-                Debug.Log("land");
                 DeactivateState(driveState.in_air);
                 transform.position = hitInfo.point - (transform.forward * 2.0f);
             }
@@ -454,7 +487,7 @@ public class carScript : MonoBehaviour
             downCheck.direction = -transform.up;
             //===============================================
             //Front Left
-            downCheck.origin = new Vector3(wheel_fl.position.x, wheel_fl.position.y + 0.3f, wheel_fl.position.z);
+            downCheck.origin = new Vector3(wheel_fl.position.x, wheel_fl.position.y + offset_h_o, wheel_fl.position.z);
             Debug.DrawRay(downCheck.origin, downCheck.direction * 1.0f, Color.yellow);
 
             if (Physics.Raycast(downCheck, out hitInfo, 1.0f, lMask))
@@ -463,7 +496,7 @@ public class carScript : MonoBehaviour
             }
             //==============================================
             //Front Right
-            downCheck.origin = new Vector3(wheel_fr.position.x, wheel_fr.position.y + 0.3f, wheel_fr.position.z);
+            downCheck.origin = new Vector3(wheel_fr.position.x, wheel_fr.position.y + offset_h_o, wheel_fr.position.z);
             Debug.DrawRay(downCheck.origin, downCheck.direction * 1.0f, Color.yellow);
 
             if (Physics.Raycast(downCheck, out hitInfo, 1.0f, lMask))
@@ -472,7 +505,7 @@ public class carScript : MonoBehaviour
             }
             //===============================================
             //Back Left
-            downCheck.origin = new Vector3(wheel_bl.position.x, wheel_bl.position.y + 0.3f, wheel_bl.position.z);
+            downCheck.origin = new Vector3(wheel_bl.position.x, wheel_bl.position.y + offset_h_o, wheel_bl.position.z);
             Debug.DrawRay(downCheck.origin, downCheck.direction * 1.0f, Color.yellow);
 
             if (Physics.Raycast(downCheck, out hitInfo, 1.0f, lMask))
@@ -481,7 +514,7 @@ public class carScript : MonoBehaviour
             }
             //==============================================
             //Front Right
-            downCheck.origin = new Vector3(wheel_br.position.x, wheel_br.position.y + 0.3f, wheel_br.position.z);
+            downCheck.origin = new Vector3(wheel_br.position.x, wheel_br.position.y + offset_h_o, wheel_br.position.z);
             Debug.DrawRay(downCheck.origin, downCheck.direction * 1.0f, Color.yellow);
 
             if (Physics.Raycast(downCheck, out hitInfo, 1.0f, lMask))
